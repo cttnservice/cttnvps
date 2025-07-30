@@ -42,8 +42,6 @@ EOF
 
       read -p "Nhấn Enter để quay lại menu"
       ;;
-
-      ;;
     2)
           2)
       read -p "Tên database: " dbname
@@ -82,7 +80,7 @@ EOF
     5)
       read -p "Bạn có chắc chắn muốn GỠ CÀI ĐẶT CTTN VPS? (y/N): " confirm
       if [[ "$confirm" =~ ^[Yy]$ ]]; then
-        echo "🔁��� Đang gỡ cài đặt..."
+        echo "🔁��� Đang gỡ cài đặt..."
         rm -rf /opt/cttnvps
         rm -f /usr/local/bin/cttnvps
         echo "✅ Đã gỡ thành công CTTN VPS Script."
