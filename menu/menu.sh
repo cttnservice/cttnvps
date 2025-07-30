@@ -14,13 +14,11 @@ while true; do
     1)
       read -p "Nhập domain (ví dụ: mysite.local): " domain
       mkdir -p /var/www/$domain/public_html
-      chown -R $USER:$USER /var/www/$domain/public_html
+      chown -R www-data:www-data /var/www/$domain
       chmod -R 755 /var/www
 
-      # Tạo file index.html mẫu
       echo "<h1>Website $domain đã được tạo!</h1>" > /var/www/$domain/public_html/index.html
 
-      # Tạo virtual host NGINX
       if [ -d /etc/nginx/sites-available ]; then
         cat > /etc/nginx/sites-available/$domain <<EOF
 server {
@@ -37,36 +35,41 @@ EOF
         nginx -t && systemctl reload nginx
         echo "✅ Website $domain đã tạo xong (NGINX)."
       else
-        echo "❌ Không tìm thấy cấu hình NGINX. Bỏ qua cấu hình vhost."
+        echo "❌ Không tìm thấy cấu hình NGINX."
       fi
 
       read -p "Nhấn Enter để quay lại menu"
       ;;
     2)
-          2)
       read -p "Tên database: " dbname
       read -p "Tên user: " dbuser
       read -s -p "Mật khẩu cho user: " dbpass
       echo ""
 
-      if command -v mysql >/dev/null 2>&1; then
-        mysql -e "CREATE DATABASE $dbname;"
-        mysql -e "CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
-        mysql -e "GRANT ALL PRIVILEGES ON $dbname.* TO '$dbuser'@'localhost';"
-        mysql -e "FLUSH PRIVILEGES;"
+      if command -v mysql >/dev/null 2>&1 || command -v mariadb >/dev/null 2>&1; then
+        mysql -u root <<MYSQL
+CREATE DATABASE $dbname;
+CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';
+GRANT ALL PRIVILEGES ON $dbname.* TO '$dbuser'@'localhost';
+FLUSH PRIVILEGES;
+MYSQL
         echo "✅ Đã tạo database và user thành công!"
       else
-        echo "❌ MySQL chưa được cài hoặc không khả dụng."
+        echo "❌ MySQL/MariaDB chưa được cài hoặc không khả dụng."
       fi
 
       read -p "Nhấn Enter để quay lại menu"
       ;;
-
-      ;;
     3)
       echo "Quản lý firewall..."
-      sudo ufw status || firewall-cmd --state
-      read -p "(Enter để tiếp tục)"
+      if command -v ufw >/dev/null 2>&1; then
+        sudo ufw status verbose
+      elif command -v firewall-cmd >/dev/null 2>&1; then
+        firewall-cmd --list-all
+      else
+        echo "❌ Không tìm thấy UFW hoặc Firewalld."
+      fi
+      read -p "Nhấn Enter để quay lại menu"
       ;;
     4)
       echo "Đang cập nhật hệ thống..."
@@ -75,7 +78,7 @@ EOF
       else
         dnf -y update || yum -y update
       fi
-      read -p "(Enter để quay lại menu)"
+      read -p "Nhấn Enter để quay lại menu"
       ;;
     5)
       read -p "Bạn có chắc chắn muốn GỠ CÀI ĐẶT CTTN VPS? (y/N): " confirm
