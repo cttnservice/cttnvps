@@ -12,12 +12,58 @@ while true; do
   read -p "Chọn một tùy chọn: " choice
   case $choice in
     1)
-      echo "Tạo website... (đang cập nhật)"
-      sleep 2
+      read -p "Nhập domain (ví dụ: mysite.local): " domain
+      mkdir -p /var/www/$domain/public_html
+      chown -R $USER:$USER /var/www/$domain/public_html
+      chmod -R 755 /var/www
+
+      # Tạo file index.html mẫu
+      echo "<h1>Website $domain đã được tạo!</h1>" > /var/www/$domain/public_html/index.html
+
+      # Tạo virtual host NGINX
+      if [ -d /etc/nginx/sites-available ]; then
+        cat > /etc/nginx/sites-available/$domain <<EOF
+server {
+    listen 80;
+    server_name $domain;
+    root /var/www/$domain/public_html;
+    index index.html index.php;
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+}
+EOF
+        ln -s /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/
+        nginx -t && systemctl reload nginx
+        echo "✅ Website $domain đã tạo xong (NGINX)."
+      else
+        echo "❌ Không tìm thấy cấu hình NGINX. Bỏ qua cấu hình vhost."
+      fi
+
+      read -p "Nhấn Enter để quay lại menu"
+      ;;
+
       ;;
     2)
-      echo "Tạo database... (đang cập nhật)"
-      sleep 2
+          2)
+      read -p "Tên database: " dbname
+      read -p "Tên user: " dbuser
+      read -s -p "Mật khẩu cho user: " dbpass
+      echo ""
+
+      if command -v mysql >/dev/null 2>&1; then
+        mysql -e "CREATE DATABASE $dbname;"
+        mysql -e "CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
+        mysql -e "GRANT ALL PRIVILEGES ON $dbname.* TO '$dbuser'@'localhost';"
+        mysql -e "FLUSH PRIVILEGES;"
+        echo "✅ Đã tạo database và user thành công!"
+      else
+        echo "❌ MySQL chưa được cài hoặc không khả dụng."
+      fi
+
+      read -p "Nhấn Enter để quay lại menu"
+      ;;
+
       ;;
     3)
       echo "Quản lý firewall..."
