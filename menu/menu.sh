@@ -11,17 +11,21 @@ while true; do
   read -p "Chọn một tùy chọn: " choice
   case $choice in
     1)
-      echo "Tạo website... (đang cập nhật)"
+      echo "Đang tạo website... (chưa hỗ trợ)"
       sleep 2
       ;;
     2)
-      echo "Tạo database... (đang cập nhật)"
+      echo "Đang tạo database... (chưa hỗ trợ)"
       sleep 2
       ;;
     3)
-      echo "Quản lý firewall..."
-      sudo ufw status || firewall-cmd --state
-      read -p "(Enter để tiếp tục)"
+      echo "Quản lý firewall:"
+      if command -v ufw >/dev/null 2>&1; then
+        sudo ufw status verbose
+      else
+        sudo firewall-cmd --state
+      fi
+      read -p "Nhấn Enter để quay lại..."
       ;;
     4)
       echo "Đang cập nhật hệ thống..."
@@ -30,7 +34,7 @@ while true; do
       else
         dnf -y update || yum -y update
       fi
-      read -p "(Enter để quay lại menu)"
+      read -p "Nhấn Enter để quay lại..."
       ;;
     0)
       echo "Tạm biệt!"
@@ -42,3 +46,4 @@ while true; do
       ;;
   esac
 done
+
